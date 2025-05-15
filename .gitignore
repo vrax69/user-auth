@@ -1,3 +1,10 @@
+# Node.js
+node_modules/
 .env
 .env.local
 .env.production
+
+# pnpm/yarn/npm
+.pnpm-debug.log
+pnpm-lock.yaml
+.modules.yaml
