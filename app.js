@@ -20,7 +20,25 @@ app.use((req, res, next) => {
 
 // Configuración CORS mejorada
 app.use(cors({
-  origin: ["https://www.nwfg.net", "https://nwfg.net", "http://localhost:3000", "https://localhost:3000"],
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      "https://www.nwfg.net",
+      "https://nwfg.net",
+      "http://localhost:3000",
+      "https://localhost:3000",
+    ];
+
+    // Permitir dinámicamente ngrok solo en desarrollo
+    if (origin && origin.includes("ngrok-free.app")) {
+      allowedOrigins.push(origin);
+    }
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS no permitido para este origen: " + origin));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,

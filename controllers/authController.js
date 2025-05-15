@@ -35,16 +35,16 @@ export const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: !isLocalhost, // Solo true en producción
-      sameSite: isLocalhost ? "lax" : "none",
+      secure: true,             // ngrok es HTTPS → obligatorio
+      sameSite: "none",         // obligatorio si usas dominios cruzados
       path: "/",
-      domain: isLocalhost ? undefined : "nwfg.net",
       maxAge: 24 * 60 * 60 * 1000,
     });
     
+    
     res.json({ message: "Login exitoso", user: { id: user.id, nombre: user.nombre, email: user.email, role: user.rol } });
   } catch (error) {
-    console.error("Error en login:", error); // 👈 agrega esto
+    console.error("Error en login:", error);
     res.status(500).json({ message: "Error interno" });
   }
 };
