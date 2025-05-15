@@ -65,27 +65,33 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Servidor funcionando correctamente" });
 });
 
-// Configurar HTTPS con certificados SSL de Let's Encrypt
-const options = {
-  key: fs.readFileSync("/etc/letsencrypt/live/nwfg.net/privkey.pem"),
-  cert: fs.readFileSync("/etc/letsencrypt/live/nwfg.net/fullchain.pem"),
-};
-
 // Puerto
 const PORT = process.env.PORT || 3003;
 
-// Crear servidor HTTPS con mejor gestión de errores
-const server = https.createServer(options, app);
+if (process.env.NODE_ENV === "production") {
+  // Producción: HTTPS con certificados reales
+  const options = {
+    key: fs.readFileSync("/etc/letsencrypt/live/nwfg.net/privkey.pem"),
+    cert: fs.readFileSync("/etc/letsencrypt/live/nwfg.net/fullchain.pem"),
+  };
 
-server.on("clientError", (err, socket) => {
-  console.warn("⚠️ Error de cliente:", err.message);
-  socket.destroy();
-});
+  const server = https.createServer(options, app);
 
-server.on("error", (err) => {
-  console.error("🔴 Error del servidor:", err.message);
-});
+  server.on("clientError", (err, socket) => {
+    console.warn("⚠️ Error de cliente:", err.message);
+    socket.destroy();
+  });
 
-server.listen(PORT, () => {
-  console.log(`🔥 BACKEND CORRECTO EN /api/auth/listo en https://nwfg.net:${PORT}`);
-});
+  server.on("error", (err) => {
+    console.error("🔴 Error del servidor:", err.message);
+  });
+
+  server.listen(PORT, () => {
+    console.log(`🔥 BACKEND EN PRODUCCIÓN /api/auth/ en https://nwfg.net:${PORT}`);
+  });
+} else {
+  // Desarrollo local: HTTP plano
+  app.listen(PORT, () => {
+    console.log(`🔥 BACKEND EN DEV /api/auth/ en http://localhost:${PORT}`);
+  });
+}
