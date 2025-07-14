@@ -15,34 +15,26 @@ const app = express();
 // Middleware para logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log("🌍 Origin recibido:", req.headers.origin);
   next();
 });
 
-// Configuración CORS mejorada
+// Configuración CORS simplificada
+const allowedOrigin = process.env.FRONTEND_ORIGIN;
+
 app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      "https://www.nwfg.net",
-      "https://nwfg.net",
-      "http://localhost:3000",
-      "https://localhost:3000",
-    ];
-
-    // Permitir dinámicamente ngrok solo en desarrollo
-    if (origin && origin.includes("ngrok-free.app")) {
-      allowedOrigins.push(origin);
+  origin: function (origin, callback) {
+    // Permite requests sin origen (ejemplo: Postman/curl)
+    if (!origin) return callback(null, true);
+    if (origin === allowedOrigin) {
+      return callback(null, true);
     }
-
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS no permitido para este origen: " + origin));
-    }
+    return callback(new Error("No permitido por CORS: " + origin));
   },
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-  maxAge: 86400 // 24 horas en segundos - mejora rendimiento
+  maxAge: 86400,
 }));
 
 app.use(express.json());
