@@ -5,7 +5,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import fs from "fs";
 import https from "https";
-
 import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();

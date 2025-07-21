@@ -2,55 +2,151 @@
 import jwt from "jsonwebtoken";
 import { db } from "../config.js";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1d";
-
-// LOGIN
 export const login = async (req, res) => {
-  const { email, password } = req.body;
-
   try {
-    const [rows] = await db.query("SELECT * FROM usuarios WHERE email = ?", [email]);
-    if (rows.length === 0) return res.status(401).json({ message: "Usuario no encontrado" });
+    const { email, password } = req.body;
 
-    const user = rows[0];
+    // Validar campos requeridos
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: "Email y contraseña son requeridos",
+        code: "MISSING_CREDENTIALS"
+      });
+    }
 
-    if (password !== user.password) {
-        return res.status(401).json({ message: "Contraseña incorrecta" });
-      }
+    // Buscar usuario en la base de datos
+    const [userRows] = await db.execute(
+      'SELECT id, nombre, email, password, rol, centro, STATUS_OF_AGENT FROM usuarios WHERE email = ?',
+      [email]
+    );
 
-      const token = jwt.sign(
-        {
-          id: user.id,
-          role: user.rol,
-          nombre: user.nombre,
-          centro: user.centro
-        },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-      );
-      
-    const origin = req.headers.origin || "";
-    const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1");
+    if (userRows.length === 0) {
+      return res.status(401).json({ 
+        message: "Credenciales inválidas",
+        code: "INVALID_CREDENTIALS"
+      });
+    }
 
+    const user = userRows[0];
+
+    // Verificar contraseña ANTES de cualquier otra validación
+    const isPasswordValid = password === user.password;
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
+        message: "Credenciales inválidas",
+        code: "INVALID_CREDENTIALS"
+      });
+    }
+
+    // ⚠️ VALIDACIÓN TEMPRANA: Verificar estado ANTES de generar el token
+    if (user.STATUS_OF_AGENT !== 'active') {
+      return res.status(403).json({ 
+        message: "Tu cuenta está inactiva. Contacta al administrador.",
+        code: "ACCOUNT_INACTIVE",
+        status: user.STATUS_OF_AGENT
+      });
+    }
+
+    // Solo si llegamos aquí (credenciales válidas Y usuario activo) generamos el token
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        nombre: user.nombre,
+        email: user.email,
+        role: user.role,
+        centro: user.centro
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
+    );
+
+    // Configurar cookie
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,             // ngrok es HTTPS → obligatorio
-      sameSite: "none",         // obligatorio si usas dominios cruzados
-      path: "/",
-      maxAge: 24 * 60 * 60 * 1000,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 24 horas
     });
-    
-    
-    res.json({ message: "Login exitoso", user: { id: user.id, nombre: user.nombre, email: user.email, role: user.rol } });
+
+    // Respuesta exitosa (sin enviar la contraseña)
+    res.status(200).json({
+      message: "Login exitoso",
+      user: {
+        id: user.id,
+        nombre: user.nombre,
+        email: user.email,
+        role: user.role,
+        centro: user.centro,
+        status: user.STATUS_OF_AGENT
+      }
+    });
+
   } catch (error) {
     console.error("Error en login:", error);
-    res.status(500).json({ message: "Error interno" });
+    res.status(500).json({ 
+      message: "Error interno del servidor",
+      code: "SERVER_ERROR"
+    });
   }
 };
 
-// LOGOUT
 export const logout = (req, res) => {
-  res.clearCookie("token");
-  res.json({ message: "Sesión cerrada" });
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    res.status(200).json({ 
+      message: "Logout exitoso",
+      code: "LOGOUT_SUCCESS"
+    });
+  } catch (error) {
+    console.error("Error en logout:", error);
+    res.status(500).json({ 
+      message: "Error interno del servidor",
+      code: "SERVER_ERROR"
+    });
+  }
+};
+
+// Función para verificar estatus actual del usuario
+export const checkUserStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const [userRows] = await db.execute(
+      'SELECT id, nombre, email, role, centro, STATUS_OF_AGENT, creado_en FROM usuarios WHERE id = ?',
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ 
+        message: "Usuario no encontrado",
+        code: "USER_NOT_FOUND"
+      });
+    }
+
+    const user = userRows[0];
+
+    res.status(200).json({
+      user: {
+        id: user.id,
+        nombre: user.nombre,
+        email: user.email,
+        role: user.role,
+        centro: user.centro,
+        status: user.STATUS_OF_AGENT,
+        creado_en: user.creado_en
+      }
+    });
+
+  } catch (error) {
+    console.error("Error al verificar estatus:", error);
+    res.status(500).json({ 
+      message: "Error interno del servidor",
+      code: "SERVER_ERROR"
+    });
+  }
 };
