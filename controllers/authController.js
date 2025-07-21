@@ -53,7 +53,7 @@ export const login = async (req, res) => {
         id: user.id, 
         nombre: user.nombre,
         email: user.email,
-        role: user.role,
+        rol: user.rol,
         centro: user.centro
       },
       process.env.JWT_SECRET,
@@ -75,7 +75,7 @@ export const login = async (req, res) => {
         id: user.id,
         nombre: user.nombre,
         email: user.email,
-        role: user.role,
+        rol: user.rol,
         centro: user.centro,
         status: user.STATUS_OF_AGENT
       }
@@ -117,7 +117,7 @@ export const checkUserStatus = async (req, res) => {
     const userId = req.user.id;
     
     const [userRows] = await db.execute(
-      'SELECT id, nombre, email, role, centro, STATUS_OF_AGENT, creado_en FROM usuarios WHERE id = ?',
+      'SELECT id, nombre, email, rol, centro, STATUS_OF_AGENT, creado_en FROM usuarios WHERE id = ?',
       [userId]
     );
 
@@ -135,7 +135,7 @@ export const checkUserStatus = async (req, res) => {
         id: user.id,
         nombre: user.nombre,
         email: user.email,
-        role: user.role,
+        rol: user.rol,
         centro: user.centro,
         status: user.STATUS_OF_AGENT,
         creado_en: user.creado_en

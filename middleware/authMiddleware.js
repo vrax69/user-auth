@@ -17,7 +17,7 @@ export const verifyToken = async (req, res, next) => {
     
     // Verificar si el usuario existe y está activo en la base de datos
     const [userRows] = await db.execute(
-      'SELECT id, nombre, email, role, centro, STATUS_OF_AGENT FROM usuarios WHERE id = ?',
+      'SELECT id, nombre, email, rol, centro, STATUS_OF_AGENT FROM usuarios WHERE id = ?',
       [decoded.id]
     );
 
@@ -44,7 +44,7 @@ export const verifyToken = async (req, res, next) => {
       id: decoded.id,
       nombre: user.nombre,
       email: user.email,
-      role: user.role,
+      rol: user.rol,
       centro: user.centro,
       status: user.STATUS_OF_AGENT
     };

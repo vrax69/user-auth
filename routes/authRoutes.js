@@ -20,7 +20,7 @@ router.get("/verify", verifyToken, (req, res) => {
       id: req.user.id,
       nombre: req.user.nombre,
       email: req.user.email,
-      role: req.user.role,
+      rol: req.user.rol,
       centro: req.user.centro,
       status: req.user.status
     }
