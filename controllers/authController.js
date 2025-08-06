@@ -14,9 +14,9 @@ export const login = async (req, res) => {
       });
     }
 
-    // Buscar usuario en la base de datos
+    // Buscar usuario en la base de datos - traer TODAS las columnas
     const [userRows] = await db.execute(
-      'SELECT id, nombre, email, password, rol, centro, STATUS_OF_AGENT FROM usuarios WHERE email = ?',
+      'SELECT * FROM usuarios WHERE email = ?',
       [email]
     );
 
@@ -68,17 +68,13 @@ export const login = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000, // 24 horas
     });
 
+    // Crear copia del usuario sin la contraseña para la respuesta
+    const { password: _, ...userWithoutPassword } = user;
+
     // Respuesta exitosa (sin enviar la contraseña)
     res.status(200).json({
       message: "Login exitoso",
-      user: {
-        id: user.id,
-        nombre: user.nombre,
-        email: user.email,
-        rol: user.rol,
-        centro: user.centro,
-        status: user.STATUS_OF_AGENT
-      }
+      user: userWithoutPassword
     });
 
   } catch (error) {
@@ -117,7 +113,7 @@ export const checkUserStatus = async (req, res) => {
     const userId = req.user.id;
     
     const [userRows] = await db.execute(
-      'SELECT id, nombre, email, rol, centro, STATUS_OF_AGENT, creado_en FROM usuarios WHERE id = ?',
+      'SELECT * FROM usuarios WHERE id = ?',
       [userId]
     );
 
@@ -129,17 +125,12 @@ export const checkUserStatus = async (req, res) => {
     }
 
     const user = userRows[0];
+    
+    // Crear copia del usuario sin la contraseña para la respuesta
+    const { password: _, ...userWithoutPassword } = user;
 
     res.status(200).json({
-      user: {
-        id: user.id,
-        nombre: user.nombre,
-        email: user.email,
-        rol: user.rol,
-        centro: user.centro,
-        status: user.STATUS_OF_AGENT,
-        creado_en: user.creado_en
-      }
+      user: userWithoutPassword
     });
 
   } catch (error) {

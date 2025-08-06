@@ -17,7 +17,7 @@ export const verifyToken = async (req, res, next) => {
     
     // Verificar si el usuario existe y está activo en la base de datos
     const [userRows] = await db.execute(
-      'SELECT id, nombre, email, rol, centro, STATUS_OF_AGENT FROM usuarios WHERE id = ?',
+      'SELECT * FROM usuarios WHERE id = ?',
       [decoded.id]
     );
 
@@ -39,15 +39,11 @@ export const verifyToken = async (req, res, next) => {
       });
     }
 
-    // Agregar información del usuario al request
-    req.user = {
-      id: decoded.id,
-      nombre: user.nombre,
-      email: user.email,
-      rol: user.rol,
-      centro: user.centro,
-      status: user.STATUS_OF_AGENT
-    };
+    // Crear copia del usuario sin la contraseña para req.user
+    const { password: _, ...userWithoutPassword } = user;
+
+    // Agregar información COMPLETA del usuario al request
+    req.user = userWithoutPassword;
     
     next();
   } catch (error) {

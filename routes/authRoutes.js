@@ -16,14 +16,7 @@ router.get("/status", verifyToken, checkUserStatus);
 router.get("/verify", verifyToken, (req, res) => {
   res.status(200).json({
     message: "Token válido",
-    user: {
-      id: req.user.id,
-      nombre: req.user.nombre,
-      email: req.user.email,
-      rol: req.user.rol,
-      centro: req.user.centro,
-      status: req.user.status
-    }
+    user: req.user // Ahora contiene TODAS las columnas
   });
 });
 
