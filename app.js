@@ -18,14 +18,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configuración CORS simplificada
-const allowedOrigin = process.env.FRONTEND_ORIGIN;
+// Configuración CORS con múltiples orígenes desde .env
+const allowedOrigins = (process.env.FRONTEND_ORIGINS || "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
+
+console.log("allowedOrigins:", allowedOrigins); // Para debug
 
 app.use(cors({
   origin: function (origin, callback) {
     // Permite requests sin origen (ejemplo: Postman/curl)
     if (!origin) return callback(null, true);
-    if (origin === allowedOrigin) {
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
     return callback(new Error("No permitido por CORS: " + origin));
