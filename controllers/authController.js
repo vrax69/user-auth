@@ -39,8 +39,7 @@ export const login = async (req, res) => {
     }
 
     // ⚠️ VALIDACIÓN TEMPRANA: Verificar estado ANTES de generar el token
-    if (user.STATUS_OF_AGENT !== 'active') {
-      return res.status(403).json({ 
+    if (user.status !== 'active') {      return res.status(403).json({ 
         message: "Tu cuenta está inactiva. Contacta al administrador.",
         code: "ACCOUNT_INACTIVE",
         status: user.STATUS_OF_AGENT

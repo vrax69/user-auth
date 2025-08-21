@@ -31,8 +31,7 @@ export const verifyToken = async (req, res, next) => {
     const user = userRows[0];
 
     // Verificar si el usuario está activo
-    if (user.STATUS_OF_AGENT !== 'active') {
-      return res.status(403).json({ 
+    if (user.status !== 'active') {      return res.status(403).json({ 
         message: "Cuenta inactiva. Contacta al administrador.", 
         code: "ACCOUNT_INACTIVE",
         status: user.STATUS_OF_AGENT 
