@@ -67,6 +67,11 @@ export const login = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000, // 24 horas
     });
 
+    // 🔍 DEBUG: Verificar que las cookies se están enviando
+    console.log('Cookie seteada para usuario:', user.email);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('secure flag:', process.env.NODE_ENV === "production");
+
     // Crear copia del usuario sin la contraseña para la respuesta
     const { password: _, ...userWithoutPassword } = user;
 
