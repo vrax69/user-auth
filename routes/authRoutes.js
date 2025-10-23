@@ -20,4 +20,9 @@ router.get("/verify", verifyToken, (req, res) => {
   });
 });
 
+// Ruta de salud (para verificar estado del servicio)
+router.get("/health", (req, res) => {
+  res.json({ status: "ok", service: "user-auth" });
+});
+
 export default router;
