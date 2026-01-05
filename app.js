@@ -3,8 +3,6 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import fs from "fs";
-import https from "https";
 import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
@@ -64,30 +62,14 @@ app.get("/api/health", (req, res) => {
 // Puerto
 const PORT = process.env.PORT || 3003;
 
-if (process.env.NODE_ENV === "production") {
-  // Producción: HTTPS con certificados reales
-  const options = {
-    key: fs.readFileSync("/etc/letsencrypt/live/nwfg.net/privkey.pem"),
-    cert: fs.readFileSync("/etc/letsencrypt/live/nwfg.net/fullchain.pem"),
-  };
-
-  const server = https.createServer(options, app);
-
-  server.on("clientError", (err, socket) => {
-    console.warn("⚠️ Error de cliente:", err.message);
-    socket.destroy();
-  });
-
-  server.on("error", (err) => {
-    console.error("🔴 Error del servidor:", err.message);
-  });
-
-  server.listen(PORT, () => {
-    console.log(`🔥 BACKEND EN PRODUCCIÓN /api/auth/ en https://nwfg.net:${PORT}`);
-  });
-} else {
-  // Desarrollo local: HTTP plano
-  app.listen(PORT, () => {
-    console.log(`🔥 BACKEND EN DEV /api/auth/ en http://localhost:${PORT}`);
-  });
-}
+/**
+ * NOTA DE IMPLEMENTACIÓN:
+ * En producción, Nginx actúa como Reverse Proxy manejando el SSL (HTTPS).
+ * Por lo tanto, la aplicación Node.js siempre debe escuchar en HTTP plano
+ * para comunicarse correctamente con el upstream de Nginx.
+ */
+app.listen(PORT, () => {
+  const mode = process.env.NODE_ENV === "production" ? "PRODUCCIÓN" : "DESARROLLO";
+  const protocol = "http"; // Nginx se encarga del https hacia afuera
+  console.log(`🔥 BACKEND EN ${mode} activo en ${protocol}://localhost:${PORT}`);
+});
